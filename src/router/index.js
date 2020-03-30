@@ -156,13 +156,13 @@ const routes=[
                 meta:{title:'兴智传承-通话记录'}
             },
             {
-                path:'/editRoleManage',
+                path:'/editRoleManage/:id?',
                 name:'editRoleManage',
                 component:EditRoleManage,
                 meta:{title:'兴智传承-编辑角色管理'}
             },
             {
-                path:'/editSysUser',
+                path:'/editSysUser/:id?',
                 name:'editSysUser',
                 component:EditSysUser,
                 meta:{title:'兴智传承-编辑系统用户'}

@@ -31,13 +31,14 @@
         <Panel 
         title="数据列表"
         >
-            <TableTopBtn @tableTopAddHandle="tableTopAddHandle" @tableTopRightHandle="tableTopRightHandle"></TableTopBtn>
+            <TableTopBtn @tableTopAddHandle="tableTopAddHandle" @exportTable="exportTable"></TableTopBtn>
             <div class="otable">
                 <el-table 
                     :data="tableData" 
                     border 
                     stripe 
-                    style="width:100%;"
+                    style="width:100%;" 
+                    id="out-table"
                 >
                     <el-table-column 
                         align="center" 
@@ -51,6 +52,14 @@
                             <div class="" v-if="cols.prop=='cz'">
                                 <el-button @click="editRow(scope.row)" size="mini" icon="el-icon-edit" type="primary">编辑</el-button>
                                 <el-button @click="deleRow(scope.row)" size="mini" icon="el-icon-delete" type="danger">删除</el-button>
+                            </div>
+                            <div class="" v-else-if="cols.prop=='face'">
+                                <img v-if="scope.row[cols.prop]" class="avatar" :src="scope.row[cols.prop]" alt="">
+                                <img v-else class="avatar" src="static/img/normal-face.png" alt="">
+                            </div>
+                            <div class="" v-else-if="cols.prop=='sex'">
+                                <span class="success" v-if="scope.row[cols.prop]==1">男</span>
+                                <span class="danger" v-else>女</span>
                             </div>
                             <div class="" v-else>{{scope.row[cols.prop]}}</div>
                         </template>
@@ -70,6 +79,7 @@
 </template>
 <script>
 import Config from '@/config'
+import {manageList} from '@/api'
 import BreadCrumb from 'comp/base/breadCrumb/index.vue'
 import Search from 'comp/base/search/index.vue'
 import Panel from 'comp/base/panel/index.vue'
@@ -90,25 +100,26 @@ export default {
             },
             // 表格数据
             tableData:[
-                {face:'头像1',trueName:'李少1',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                {face:'头像2',trueName:'李少2',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                {face:'头像3',trueName:'李少3',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                {face:'头像4',trueName:'李少4',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                {face:'头像5',trueName:'李少5',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                {face:'头像6',trueName:'李少6',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                {face:'头像7',trueName:'李少7',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
+                // {face:'头像1',trueName:'李少1',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
+                // {face:'头像2',trueName:'李少2',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
+                // {face:'头像3',trueName:'李少3',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
+                // {face:'头像4',trueName:'李少4',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
+                // {face:'头像5',trueName:'李少5',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
+                // {face:'头像6',trueName:'李少6',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
+                // {face:'头像7',trueName:'李少7',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
             ],
             // 表结构
             tableFlat:[
                 {prop:'face',label:'用户头像'},
-                {prop:'trueName',label:'真实姓名'},
+                {prop:'username',label:'真实姓名'},
                 {prop:'sex',label:'性别'},
-                {prop:'roleName',label:'角色名称'},
+                {prop:'name',label:'角色名称'},
                 {prop:'loginName',label:'登录名'},
-                {prop:'pass',label:'密码'},
+                {prop:'password',label:'密码'},
                 {prop:'addTime',label:'创建时间'},
                 {prop:'cz',label:'操作',width:280}
             ],
+            
             // 分页配置
             pageInfo:{
                 pageIndex:Config.pageIndex,
@@ -118,21 +129,58 @@ export default {
             }
         }
     },
+    created() {
+        let that=this
+        that._tableSearch()
+    },
     methods:{
+        async _tableSearch(){//表格查询
+            let that=this
+            let tempParam=that.searchForm
+            tempParam['pageSize']=that.pageInfo.pageSize
+            tempParam['pageIndex']=that.pageInfo.pageIndex
+            let res=await manageList(tempParam)
+            if(res.code!=Config.ok){that.$model.err(res.msg);return}
+            let tempManageList=res.result.data
+            tempManageList.forEach((row,index)=>{
+                row['addTime']=that.$tool.dealTime(row['addTime'])
+                if(row['face']!='') row['face']=Config.devUrl+'/public/'+row['face'];
+            })
+            that.tableData=tempManageList
+            that.pageInfo['total']=res.result.total
+        },
         // 头部查询
         topSearch(){
-
+            let that=this
+            that._tableSearch()
         },
         // 头部重置
         topRest(){
-
+            let that=this
+            that.tableSearchReset()
+        },
+        tableSearchReset(){//表格查询重置
+            let that=this
+            that.searchForm={
+                username:'',
+                loginName:''
+            }
+            that.pageInfo={
+                pageIndex:Config.pageIndex,
+                pageSizes:Config.pageSizes,
+                pageSize:Config.pageSize,
+                total:Config.total
+            }
+            that._tableSearch()
         },
         editRow(row){
-
+            let that=this
+            if(!row.id){that.$model.err('id不存在');return}
+            that.$router.push('/editSysUser/'+row.id)
         },
         deleRow(row){
             let that=this
-            that.$model.confirm('确认提示','确定删除该管理员？',(res)=>{
+            that.$model.confirm('确认提示','确定删除-'+row.loginName+'-管理员？',(res)=>{
                 console.log(res)
             })
         },
@@ -140,15 +188,36 @@ export default {
             let that=this
             that.$router.push('/editSysUser')
         },
-        tableTopRightHandle(val){
+        exportTable(idx){//表格导出
             let that=this
-            console.log(val)
+            if(idx==1){
+                let tempHeader=[],
+                    tempFilter=[],
+                    tempData=that.tableData;
+                that.tableFlat.forEach((row,index)=>{
+                    if(row.prop=='cz') return;
+                    tempHeader.push(row.label)
+                    tempFilter.push(row.prop)
+                })
+                let jsonData={//csv
+                    trade:{
+                        tHeader: tempHeader,
+                        filterVal: tempFilter,
+                        list: tempData
+                    }
+                }
+                that.$tool.exportCsv(jsonData)
+            }else{
+                that.$tool.exportExcel('#out-table')
+            }
         },
-        handleCurrent(param){
-
+        handleCurrent(page){
+            let that=this
+            that._tableSearch()
         },
-        handleSize(param){
-            
+        handleSize(page){
+            let that=this
+            that._tableSearch()
         }
     },
     components:{

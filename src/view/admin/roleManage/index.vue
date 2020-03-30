@@ -11,7 +11,7 @@
                 <el-form :inline="true" :model="searchForm" class="demo-form-inline">
                     <div class="rows">
                         <el-form-item label="">
-                            <el-input class="inputs" v-model="searchForm.roleName" placeholder="请输入角色名称"></el-input>
+                            <el-input class="inputs" v-model="searchForm.name" placeholder="请输入角色名称"></el-input>
                         </el-form-item>
                     </div>
                     <div class="rows">
@@ -63,6 +63,7 @@
     </div>
 </template>
 <script>
+import {roleList} from '@/api'
 import Config from '@/config'
 import BreadCrumb from 'comp/base/breadCrumb/index.vue'
 import Search from 'comp/base/search/index.vue'
@@ -78,18 +79,18 @@ export default {
             ],
             // 头部查询
             searchForm:{
-                roleName:''
+                name:''
             },
             // 表格数据
             tableData:[
-                {roleName:'管理员',addTime:'2019-04-01 07:58:26'},
-                {roleName:'建构管理员',addTime:'2020-03-05 09:54:45'},
-                {roleName:'总督导',addTime:'2019-04-01 07:58:46'},
-                {roleName:'指导师',addTime:'2019-04-01 07:59:07'}
+                // {name:'管理员',addTime:'2019-04-01 07:58:26'},
+                // {roleName:'建构管理员',addTime:'2020-03-05 09:54:45'},
+                // {roleName:'总督导',addTime:'2019-04-01 07:58:46'},
+                // {roleName:'指导师',addTime:'2019-04-01 07:59:07'}
             ],
             // 表结构
             tableFlat:[
-                {prop:'roleName',label:'角色名称'},
+                {prop:'name',label:'角色名称'},
                 {prop:'addTime',label:'创建时间'},
                 {prop:'cz',label:'操作'}
             ],
@@ -103,29 +104,61 @@ export default {
 
         }
     },
+    created() {
+        let that=this
+        that._tableSearch()
+    },
     methods:{
-        // 头部查询
+        async _tableSearch(){
+            let that=this
+            let tempParam=that.searchForm
+            tempParam['pageSize']=that.pageInfo.pageSize
+            tempParam['pageIndex']=that.pageInfo.pageIndex
+            let res=await roleList(tempParam)
+            if(res.code!=Config.ok){that.$model.err(res.msg);return}
+            let tempTableData=res.result.data
+            tempTableData.forEach((row,index)=>{
+                row['addTime']=that.$tool.dealTime(row['addTime'])
+            })
+            that.tableData=tempTableData
+            that.pageInfo['total']=res.result.total
+        },
         topSearch(){
-
+            let that=this
+            that._tableSearch()
         },
         // 头部重置
         topRest(){
-
+            let that=this
+            that.tableSearchReset()
+        },
+        tableSearchReset(){
+            let that=this
+            that.searchForm={
+                name:''
+            }
+            that.pageInfo={
+                pageIndex:Config.pageIndex,
+                pageSizes:Config.pageSizes,
+                pageSize:Config.pageSize,
+                total:Config.total
+            }
+            that._tableSearch()
         },
         // 表格每行数据的编辑
         editRow(row){
             let that=this
-            console.log(row)
-            that.$router.push('/editRoleManage')
+            if(!row.id){that.$model.err('id不存在');return}
+            that.$router.push('/editRoleManage/'+row.id)
 
         },
-        // 分页切换
-        handleCurrent(objs){
-            console.log('current',objs)
+        handleCurrent(page){
+            let that=this
+            that._tableSearch()
         },
-        // 分页选择一页多少条数据
-        handleSize(objs){
-            console.log('size',objs)
+        handleSize(page){
+            let that=this
+            that._tableSearch()
         }
     },
     components:{

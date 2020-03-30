@@ -4,9 +4,8 @@ config['ok']=200
 //请求时间
 config['timeOut']=1000*15
 //开发环境和生产环境
-config['prodBaseUrl']='http://www.baidu.com/public/index.php'
-config['devBaseUrl']='http://www.qiangshao.com/public/index.php'
-config['baseRoot']='http://www.qiangshao.com'
+config['prodUrl']=''
+config['devUrl']='http://www.test.chuancheng.com'
 
 //分页信息
 config['pageIndex']=1
