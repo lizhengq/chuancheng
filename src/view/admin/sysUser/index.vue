@@ -31,14 +31,14 @@
         <Panel 
         title="数据列表"
         >
-            <TableTopBtn @tableTopAddHandle="tableTopAddHandle" @exportTable="exportTable"></TableTopBtn>
+            <TableTopBtn @filterHandle="filterHandle" @tableTopAddHandle="tableTopAddHandle" @printHandle="printHandle" @exportTable="exportTable"></TableTopBtn>
             <div class="otable">
                 <el-table 
                     :data="tableData" 
                     border 
                     stripe 
                     style="width:100%;" 
-                    id="out-table"
+                    id="out-table" 
                 >
                     <el-table-column 
                         align="center" 
@@ -75,6 +75,20 @@
             @handleSize="handleSize">
             </Page>
         </Panel>
+
+        <!-- 筛选弹框 -->
+        <Dialog 
+        :title="filterDialog.title" 
+        :show.sync="filterDialog.show" 
+        :width="filterDialog.width">
+            <div class="q_filter" slot="d_body">
+                <el-row :gutter="4">
+                    <el-col v-if="tableFilterFlat.length" :span="8" v-for="(item,index) in tableFilterFlat" :key="index">
+                        <div class="taskList" @click="clickFilterField(index)" :class="item['flag'] == true ? 'taskListActive' : ''">{{item.label}}</div>
+                    </el-col>
+                </el-row>
+            </div>
+        </Dialog>
     </div>
 </template>
 <script>
@@ -85,6 +99,7 @@ import Search from 'comp/base/search/index.vue'
 import Panel from 'comp/base/panel/index.vue'
 import Page from 'comp/base/page/index.vue'
 import TableTopBtn from 'comp/base/tableTopBtn/index.vue'
+import Dialog from 'comp/base/dialog/index.vue'
 export default {
     data(){
         return{
@@ -99,15 +114,7 @@ export default {
                 loginName:''
             },
             // 表格数据
-            tableData:[
-                // {face:'头像1',trueName:'李少1',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                // {face:'头像2',trueName:'李少2',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                // {face:'头像3',trueName:'李少3',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                // {face:'头像4',trueName:'李少4',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                // {face:'头像5',trueName:'李少5',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                // {face:'头像6',trueName:'李少6',sex:1,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-                // {face:'头像7',trueName:'李少7',sex:0,roleName:'秀恩爱666',loginName:'我是787',pass:'5736869qiang',addTime:'2019-04-01'},
-            ],
+            tableData:[],
             // 表结构
             tableFlat:[
                 {prop:'face',label:'用户头像'},
@@ -126,12 +133,25 @@ export default {
                 pageSizes:Config.pageSizes,
                 pageSize:Config.pageSize,
                 total:Config.total
+            },
+            tableFilterFlat:[],
+            filterDialog:{
+                title:'条件筛选',
+                show:false,
+                width:'35%'
             }
         }
     },
     created() {
         let that=this
         that._tableSearch()
+    },
+    mounted() {
+        let that=this
+        that.tableFlat.forEach((row,index)=>{
+            that.tableFilterFlat.push({prop:row.prop,label:row.label,flag:false})
+        })
+        
     },
     methods:{
         async _tableSearch(){//表格查询
@@ -148,6 +168,25 @@ export default {
             })
             that.tableData=tempManageList
             that.pageInfo['total']=res.result.total
+        },
+        clickFilterField(idx){//点击筛选字段
+            let that=this
+            let tempField=that.tableFilterFlat
+            if(!tempField[idx].flag) tempField[idx]['flag']=true;
+            else tempField[idx]['flag']=false;
+            
+            that.tableFlat=[]
+            that.tableFilterFlat.forEach((row,index)=>{
+                if(row.flag==false){
+                    that.tableFlat.push({prop:row.prop,label:row.label})
+                }
+            })
+            
+        },
+        // 打开条件筛选
+        openFileterDialog(){
+            let that=this
+            that.filterDialog.show=!that.filterDialog.show
         },
         // 头部查询
         topSearch(){
@@ -188,6 +227,14 @@ export default {
             let that=this
             that.$router.push('/editSysUser')
         },
+        printHandle(){//表格打印
+            let that=this
+            that.$tool.printHTML('out-table')
+        },
+        filterHandle(){//表格筛选
+            let that=this
+            that.openFileterDialog()
+        },
         exportTable(idx){//表格导出
             let that=this
             if(idx==1){
@@ -225,7 +272,8 @@ export default {
         Search,
         Panel,
         Page,
-        TableTopBtn
+        TableTopBtn,
+        Dialog
     }
 }
 </script>

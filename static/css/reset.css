@@ -70,6 +70,11 @@ html,body,#app{width:100%;height:100%;overflow: hidden;}
 .danger{color:#F56C6C !important;}
 .info{color:#909399 !important;}
 
+
+.q_filter .taskList{text-align: center;line-height:52px;background: #67C23A;cursor:pointer;color:#fff;}
+.q_filter .taskListActive{background:#c1c1c1;}
+.q_filter .el-col{margin-bottom:4px !important;}
+
 .top_border{border-top:4px solid #e7eaec;}
 .box{width:100%;min-height:50%;background:#fff;border-radius: 6px;}
 .con .btn-wrap{padding:15px 20px 0 20px;}
